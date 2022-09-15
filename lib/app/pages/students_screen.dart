@@ -9,8 +9,6 @@ class StudentList extends StatelessWidget {
   Widget build(BuildContext context) {
     final Map arguments = ModalRoute.of(context)?.settings.arguments as Map;
 
-    // print(arguments['test'].vars);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(arguments['room']),
