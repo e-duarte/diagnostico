@@ -21,9 +21,7 @@ class Init {
   }
 
   static _registerRepositories() {
-    GetIt.I.registerLazySingleton<ConfigurationRepository>(
-        () => SembastConfigurationRepository());
-    GetIt.I
-        .registerLazySingleton<TestsRepository>(() => SembastTestsRepository());
+    GetIt.I.registerLazySingleton<SettingRepository>(
+        () => SembastSettingRepository());
   }
 }

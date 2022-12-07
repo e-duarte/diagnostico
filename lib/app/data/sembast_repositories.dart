@@ -1,12 +1,11 @@
 import 'package:diagnostico/app/data/interfaces_repositories.dart';
-import 'package:diagnostico/app/model/config.dart';
-import 'package:diagnostico/app/model/test.dart';
+import 'package:diagnostico/app/model/setting.dart';
 import 'package:get_it/get_it.dart';
 import 'package:sembast/sembast.dart';
 
-class SembastConfigurationRepository implements ConfigurationRepository {
+class SembastSettingRepository implements SettingRepository {
   final Database _database = GetIt.I.get();
-  final StoreRef _store = intMapStoreFactory.store("configuration_store");
+  final StoreRef _store = intMapStoreFactory.store("setting_store");
 
   @override
   Future<void> dropStore() async {
@@ -14,47 +13,24 @@ class SembastConfigurationRepository implements ConfigurationRepository {
   }
 
   @override
-  Future<void> insertConfiguration(Configuration config) async {
-    _store.drop(_database);
-
-    final l = await listConfigurations();
-    return await _store.add(_database, config.toFireStore());
-  }
-
-  @override
-  Future<Configuration?> getConfiguration() async {
+  Future<Setting?> getSetting() async {
     final snapshot = await _store.record(1).get(_database);
 
-    return snapshot != null ? Configuration.fromSembast(snapshot) : null;
+    return snapshot != null ? Setting.fromSembast(snapshot) : null;
   }
 
   @override
-  Future<List<Configuration>> listConfigurations() async {
+  Future<void> insertSetting(Setting setting) async {
+    await dropStore();
+    return await _store.add(_database, setting.toFireStore());
+  }
+
+  @override
+  Future<List<Setting>> listSettings() async {
     final snapshots = await _store.find(_database);
+
     return snapshots
-        .map((snapshot) => Configuration.fromSembast(snapshot.value))
-        .toList(growable: false);
-  }
-}
-
-class SembastTestsRepository implements TestsRepository {
-  final Database _database = GetIt.I.get();
-  final StoreRef _store = intMapStoreFactory.store("tests_store");
-
-  @override
-  Future<void> dropStore() async {
-    _store.drop(_database);
-  }
-
-  @override
-  Future<Tests?> getTest() async {
-    final snapshot = await _store.record(1).get(_database);
-    return snapshot != null ? Tests.fromSembast(snapshot) : null;
-  }
-
-  @override
-  Future<void> insertTest(Tests test) async {
-    _store.drop(_database);
-    return await _store.add(_database, test.toFireStore());
+        .map((snapshot) => Setting.fromSembast(snapshot.value))
+        .toList();
   }
 }

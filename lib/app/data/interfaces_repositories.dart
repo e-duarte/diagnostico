@@ -1,20 +1,11 @@
-import 'package:diagnostico/app/model/config.dart';
-import 'package:diagnostico/app/model/test.dart';
+import 'package:diagnostico/app/model/setting.dart';
 
-abstract class ConfigurationRepository {
-  Future<Configuration?> getConfiguration();
+abstract class SettingRepository {
+  Future<Setting?> getSetting();
 
-  Future<void> insertConfiguration(Configuration configuration);
+  Future<List<Setting>> listSettings();
 
-  Future<void> dropStore();
-
-  Future<List<Configuration>> listConfigurations();
-}
-
-abstract class TestsRepository {
-  Future<Tests?> getTest();
-
-  Future<void> insertTest(Tests test);
+  Future<void> insertSetting(Setting setting);
 
   Future<void> dropStore();
 }

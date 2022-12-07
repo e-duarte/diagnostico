@@ -1,37 +1,59 @@
 import 'package:diagnostico/app/model/student.dart';
+import 'package:diagnostico/app/model/test_done.dart';
+import 'package:diagnostico/app/service/firestore_service.dart';
 import 'package:diagnostico/app/service/sheet_service.dart';
 import 'package:flutter/material.dart';
-import 'package:diagnostico/app/model/test.dart';
+import 'package:diagnostico/app/model/setting.dart';
+
+typedef UpdateToDoCallback = void Function();
 
 class TestScreen extends StatelessWidget {
-  const TestScreen({Key? key}) : super(key: key);
+  const TestScreen({
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final Map arguments = ModalRoute.of(context)?.settings.arguments as Map;
 
-    return TestView(
-      link: arguments['link'],
-      room: arguments['room'],
-      test: arguments['test'],
-      student: arguments['student'],
-    );
+    print(arguments['student']);
+
+    return arguments['UpdateTodoHandle'] != null
+        ? TestView(
+            userEmail: arguments['user_email'],
+            classroom: arguments['classroom'],
+            test: arguments['test'],
+            student: arguments['student'],
+            testYear: arguments['year'],
+            updateTodoHandle: arguments['UpdateTodoHandle'],
+          )
+        : TestView(
+            userEmail: arguments['user_email'],
+            classroom: arguments['classroom'],
+            test: arguments['test'],
+            student: arguments['student'],
+            testYear: arguments['year'],
+          );
   }
 }
 
 class TestView extends StatefulWidget {
   const TestView({
-    required this.link,
-    required this.room,
+    required this.userEmail,
+    required this.classroom,
     required this.test,
     required this.student,
+    required this.testYear,
+    this.updateTodoHandle,
     Key? key,
   }) : super(key: key);
 
-  final String link;
-  final String room;
+  final String userEmail;
+  final String classroom;
   final Test test;
   final Student student;
+  final int testYear;
+  final UpdateToDoCallback? updateTodoHandle;
 
   @override
   _TestViewState createState() => _TestViewState();
@@ -43,12 +65,11 @@ class _TestViewState extends State<TestView> {
   @override
   void initState() {
     super.initState();
-
-    selectedValues = widget.student.responses.isNotEmpty
-        ? widget.student.responses
-        : widget.test.vars.keys
-            .map((k) => widget.test.vars[k][0].toString())
-            .toList();
+    var responses = widget.student.responses;
+    selectedValues =
+        responses.keys.map((e) => responses[e]).toList().join() != ''
+            ? responses.keys.map((k) => responses[k]).toList().cast<String>()
+            : responses.keys.map((k) => '').toList();
   }
 
   void radioHandle(String? selected, int index) {
@@ -60,60 +81,79 @@ class _TestViewState extends State<TestView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFECECEC),
       appBar: AppBar(
         title: Text(widget.student.name),
+        backgroundColor: const Color(0xAA2ECC71),
       ),
-      body: Container(
-        padding: const EdgeInsets.all(20.0),
-        child: ListView(
-          children: <Widget>[
-            for (int i = 0; i < widget.test.vars.length; i++)
-              Question(
-                question: widget.test.vars.keys.elementAt(i),
-                values: widget.test.vars[widget.test.vars.keys.elementAt(i)]
-                    .cast<String>(),
-                valueSelected: selectedValues[i],
-                questionIndex: i,
-                handle: radioHandle,
-              )
-          ],
+      body: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.95,
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(20.0),
+          child: ListView(
+            children: <Widget>[
+              for (int i = 0; i < widget.student.responses.length; i++)
+                Question(
+                  question: widget.student.responses.keys.elementAt(i),
+                  values: widget
+                      .test.vars[widget.student.responses.keys.elementAt(i)]
+                      .cast<String>(),
+                  valueSelected: selectedValues[i],
+                  questionIndex: i,
+                  handle: radioHandle,
+                )
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          if (widget.test.matter == 'PSICOGÊNESE') {
+          if (widget.test.subject == 'PSICOGÊNESE') {
             String key = widget.test.vars.keys.first;
-            List<String?> valuesPiscogenese = [
-              for (var i in widget.test.vars[key]) ''
+
+            List<String?> valuesPsicogenese =
+                widget.test.vars[key].cast<String>();
+            List<String?> responsePsicogenese = [
+              for (var i in valuesPsicogenese) ''
             ];
-            for (int i = 0; i < widget.test.vars[key].length; i++) {
-              if (selectedValues.first == widget.test.vars[key][i]) {
-                valuesPiscogenese[i] = 'X';
+
+            for (int i = 0; i < valuesPsicogenese.length; i++) {
+              if (valuesPsicogenese[i] == selectedValues.first) {
+                responsePsicogenese[i] = 'X';
               } else {
-                valuesPiscogenese[i] = '';
+                responsePsicogenese[i] = '';
               }
             }
 
-            selectedValues = valuesPiscogenese;
+            selectedValues = responsePsicogenese;
           }
-          Student student = Student.fromMap({
-            "id": widget.student.id,
-            "name": widget.student.name,
-            "responses": selectedValues
-          });
 
-          print(student);
-
-          await SheetService()
-              .insertResponse(widget.link, widget.room, student);
+          await SheetService().insertResponse(widget.test.link,
+              widget.classroom, widget.student.id, List.from(selectedValues));
+          await TestDoneService().insertTestDone(TestDone(
+              userEmail: widget.userEmail,
+              student: widget.student.name,
+              classroom: widget.classroom,
+              subject: widget.test.subject,
+              grade: widget.test.grade,
+              bimester: widget.test.bimester,
+              year: widget.testYear,
+              date: DateTime.now()));
 
           print('Enviado com sucesso para o servidor');
+          widget.updateTodoHandle!();
 
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              backgroundColor: Colors.green[400],
-              content: const Text('Respostas enviadas para o servidor')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Color(0xAA2ECC71),
+              content: Text('Respostas enviadas para o servidor')));
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.send),
+        backgroundColor: const Color(0xAA2ECC71),
       ),
     );
     // return ;
@@ -157,6 +197,7 @@ class Question extends StatelessWidget {
                         title: Text(values[i]),
                         value: values[i],
                         groupValue: valueSelected,
+                        activeColor: const Color(0xAA2ECC71),
                         onChanged: (String? value) {
                           handle(value, questionIndex);
                         },
@@ -174,6 +215,7 @@ class Question extends StatelessWidget {
                         title: Text(values[i]),
                         value: values[i],
                         groupValue: valueSelected,
+                        activeColor: const Color(0xAA2ECC71),
                         onChanged: (String? value) {
                           handle(value, questionIndex);
                         },
