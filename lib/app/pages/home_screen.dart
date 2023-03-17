@@ -238,6 +238,8 @@ class _HomeState extends State<Home> {
                       if (snapshot.connectionState == ConnectionState.done) {
                         List<Setting> data = snapshot.data ?? [];
 
+                        print(data);
+
                         if (data.isNotEmpty) {
                           Setting setting = data.first;
                           List<Classroom> classrooms = [];
@@ -292,8 +294,12 @@ class _HomeState extends State<Home> {
                             };
                           }).toList();
 
-                          List<int> bimesters =
-                              data.map((setting) => setting.bimester).toList();
+                          // List<int> bimesters = data
+                          //     .where((setting) => setting.year == year)
+                          //     .map((setting) => setting.bimester)
+                          //     .toList();
+
+                          // print(bimesters);
 
                           List<String> subjectNames =
                               setting.getSubjectsByUser(loggedUser.email);
@@ -304,7 +310,11 @@ class _HomeState extends State<Home> {
                             filters: data
                                 .map((setting) => {
                                       'year': setting.year,
-                                      'bimester': bimesters,
+                                      // 'bimester': bimesters,
+                                      'bimester': data
+                                          .where((e) => e.year == setting.year)
+                                          .map((setting) => setting.bimester)
+                                          .toList(),
                                       'subject': subjectNames,
                                     })
                                 .toList(),

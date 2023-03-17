@@ -32,6 +32,7 @@ class _FilterDialogState extends State<FilterDialog> {
     var selectedFilterBySelectedYear = widget.filters.firstWhere((e) {
       return e['year'] == selectedFilters!['year'];
     });
+    print(selectedFilterBySelectedYear);
 
     var years = {
       'year': {
@@ -92,8 +93,8 @@ class _FilterDialogState extends State<FilterDialog> {
                   bottom: 14, left: 14, right: 14, top: 6),
               child: ListView(
                 children: [
-                  buildTile('Ano', years, selectedFilters!['year']),
-                  const Divider(),
+                  // buildTile('Ano', years, selectedFilters!['year']),
+                  // const Divider(),
                   buildTile(
                     'Bimestre',
                     bimesters,
