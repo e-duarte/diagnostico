@@ -31,7 +31,7 @@ class OptionButton extends StatelessWidget {
               child: Image.asset(iconPath),
               style: ElevatedButton.styleFrom(
                 shape: const CircleBorder(),
-                padding: const EdgeInsets.all(15),
+                padding: const EdgeInsets.all(0),
                 backgroundColor: Colors.white, // <-- Button color
               ),
             ),
